@@ -1,0 +1,382 @@
+/* Button */
+.vessel-selector {
+  display: inline-block;
+}
+
+.vessel-selector-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #1e3a5a;
+  border: 1px solid #2d4a6a;
+  border-radius: 6px;
+  color: #e2e8f0;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.vessel-selector-btn:hover {
+  background: #2d4a6a;
+  border-color: #3a5a7a;
+}
+
+.vessel-selector-label {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.vessel-selector-value {
+  color: #e2e8f0;
+  font-weight: 600;
+}
+
+.vessel-selector-arrow {
+  color: #64748b;
+  font-size: 10px;
+  margin-left: 2px;
+}
+
+/* Modal Overlay */
+.vessel-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Modal Window */
+.vessel-modal {
+  background: #1a2332;
+  border: 1px solid #2d4a6a;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Modal Header */
+.vessel-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: #0f1826;
+  border-bottom: 1px solid #2d4a6a;
+  border-radius: 12px 12px 0 0;
+}
+
+.vessel-modal-title {
+  margin: 0;
+  color: #e2e8f0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.vessel-modal-close {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 20px;
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.vessel-modal-close:hover {
+  background: #243447;
+  color: #e2e8f0;
+}
+
+/* Search Bar */
+.vessel-modal-search {
+  position: relative;
+  padding: 16px 20px;
+  border-bottom: 1px solid #2d4a6a;
+}
+
+.vessel-search-input {
+  width: 100%;
+  padding: 10px 38px 10px 12px;
+  background: #0f1826;
+  border: 1px solid #2d4a6a;
+  border-radius: 6px;
+  color: #e2e8f0;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.vessel-search-input:focus {
+  outline: none;
+  border-color: #3a5a7a;
+  background: #1a2332;
+}
+
+.vessel-search-input::placeholder {
+  color: #64748b;
+}
+
+.vessel-search-icon {
+  position: absolute;
+  right: 32px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  font-size: 14px;
+  pointer-events: none;
+}
+
+/* Select All */
+.vessel-select-all {
+  padding: 12px 20px;
+  border-bottom: 1px solid #2d4a6a;
+  background: #0f1826;
+}
+
+.vessel-select-all .vessel-checkbox-label {
+  flex-direction: row;
+  min-height: auto;
+  padding: 8px 12px;
+  gap: 12px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  justify-content: flex-start;
+}
+
+.vessel-select-all .vessel-checkbox-label:hover {
+  background: #243447;
+  transform: none;
+  box-shadow: none;
+}
+
+.vessel-select-all .vessel-checkbox-custom {
+  position: relative;
+  top: auto;
+  right: auto;
+}
+
+.vessel-select-all .vessel-checkbox-text {
+  text-align: left;
+  font-size: 14px;
+}
+
+/* Vessel List */
+.vessel-modal-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  min-height: 200px;
+  max-height: 400px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  align-content: start;
+}
+
+.vessel-modal-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.vessel-modal-list::-webkit-scrollbar-track {
+  background: #0f1826;
+}
+
+.vessel-modal-list::-webkit-scrollbar-thumb {
+  background: #2d4a6a;
+  border-radius: 4px;
+}
+
+.vessel-modal-list::-webkit-scrollbar-thumb:hover {
+  background: #3a5a7a;
+}
+
+/* Vessel Card */
+.vessel-checkbox-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  background: #0f1826;
+  border: 2px solid #2d4a6a;
+  border-radius: 8px;
+  min-height: 100px;
+  position: relative;
+}
+
+.vessel-checkbox-label:hover {
+  background: #243447;
+  border-color: #3a5a7a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Hide default checkbox */
+.vessel-checkbox {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* Custom Checkbox */
+.vessel-checkbox-custom {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  background: #0f1826;
+  border: 2px solid #2d4a6a;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.vessel-checkbox:checked + .vessel-checkbox-custom {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.vessel-checkbox:checked + .vessel-checkbox-custom::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  width: 5px;
+  height: 9px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.vessel-checkbox:checked ~ .vessel-checkbox-custom {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.vessel-checkbox-label:hover .vessel-checkbox-custom {
+  border-color: #3a5a7a;
+}
+
+/* Selected card styling */
+.vessel-checkbox:checked ~ .vessel-checkbox-text {
+  color: #60a5fa;
+  font-weight: 600;
+}
+
+.vessel-checkbox-label:has(.vessel-checkbox:checked) {
+  background: #1e3a5a;
+  border-color: #2563eb;
+}
+
+.vessel-checkbox-text {
+  color: #e2e8f0;
+  font-size: 16px;
+  font-weight: 500;
+  text-align: center;
+  z-index: 1;
+}
+
+/* Empty State */
+.vessel-modal-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: #64748b;
+  font-size: 14px;
+  grid-column: 1 / -1;
+}
+
+/* Modal Footer */
+.vessel-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: #0f1826;
+  border-top: 1px solid #2d4a6a;
+  border-radius: 0 0 12px 12px;
+}
+
+.vessel-modal-count {
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.vessel-modal-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.vessel-modal-btn {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.vessel-modal-btn-cancel {
+  background: #243447;
+  color: #e2e8f0;
+}
+
+.vessel-modal-btn-cancel:hover {
+  background: #2d4a6a;
+}
+
+.vessel-modal-btn-apply {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.vessel-modal-btn-apply:hover {
+  background: #1d4ed8;
+}
+
+.vessel-modal-btn-apply:disabled {
+  background: #1e3a5a;
+  color: #64748b;
+  cursor: not-allowed;
+}

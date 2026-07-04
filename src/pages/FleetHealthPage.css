@@ -1,0 +1,868 @@
+/* ── Fleet Health Page ──────────────────────────────────── */
+
+.fh-page {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-secondary);
+  min-height: 100%;
+  width: 100%;
+  min-width: 0;
+  color: var(--text-secondary);
+  transition: background-color 0.2s ease;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+.fh-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-primary);
+  background: var(--bg-primary);
+  flex-shrink: 0;
+}
+
+.fh-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fh-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.fh-breadcrumb {
+  font-size: 10.5px;
+  color: var(--text-subtle);
+}
+
+.fh-live-feed {
+  color: #34d399;
+  font-weight: 600;
+}
+
+.fh-trend-down {
+  color: #f87171;
+}
+
+.fh-trend-stable {
+  color: var(--text-tertiary);
+}
+
+.fh-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fh-hdr-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.fh-hdr-btn:hover {
+  background: var(--hover-bg);
+  color: var(--text-tertiary);
+}
+
+.fh-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-blue), #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+}
+
+/* ── Stats Row ──────────────────────────────────────────── */
+.fh-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-bottom: 1px solid var(--border-primary);
+  flex-shrink: 0;
+  background: var(--bg-primary);
+}
+
+.fh-stat-card {
+  padding: 13px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-right: 1px solid var(--border-primary);
+  position: relative;
+  transition: background 0.15s;
+}
+
+.fh-stat-card:last-child { border-right: none; }
+.fh-stat-card:hover { background: var(--hover-bg); }
+
+.fh-stat-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.fh-stat-body {
+  flex: 1;
+}
+
+.fh-stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+
+.fh-stat-unit {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-weight: 400;
+}
+
+.fh-stat-label {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.fh-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 9px;
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+
+.fh-badge--warning { background: rgba(245, 158, 11, 0.15); color: var(--status-warning); }
+.fh-badge--critical { background: rgba(239, 68, 68, 0.15); color: var(--status-critical); }
+.fh-badge--info { background: rgba(59, 130, 246, 0.15); color: var(--status-info); }
+
+/* ── Body Layout ────────────────────────────────────────── */
+/*
+ * Grid structure:
+ *   fh-body          → 2-column grid, single row fills all remaining page height
+ *   fh-col-left      → inner grid: row1=auto (chart), row2=1fr (alerts+pred)
+ *   fh-col-right     → flex column: overview card expands to fill full height
+ * Both columns are the same height — guaranteed by the outer grid row definition.
+ * UPDATED: Using 2fr 1fr for better space utilization on wide screens
+ */
+.fh-body {
+  display: grid;
+  grid-template-columns: 2.5fr 1fr;
+  grid-template-rows: 1fr;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* Responsive adjustments for better balance */
+@media (min-width: 1600px) {
+  .fh-body {
+    grid-template-columns: 2.8fr 1fr;
+  }
+}
+
+@media (max-width: 1200px) {
+  .fh-body {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .fh-body {
+    grid-template-columns: 1fr;
+  }
+  
+  .fh-col-left {
+    border-right: none;
+    border-bottom: 1px solid var(--border-primary);
+  }
+}
+
+.fh-col-left {
+  display: grid;
+  grid-template-rows: auto auto;
+  border-right: 1px solid var(--border-primary);
+  overflow-x: auto;
+  overflow-y: auto;
+  padding: 12px;
+  gap: 12px;
+  min-width: 0;
+}
+
+.fh-col-right {
+  display: flex;
+  flex-direction: column;
+  overflow-x: auto;
+  overflow-y: auto;
+  padding: 12px;
+  min-width: 220px;
+}
+
+/* ── Cards ──────────────────────────────────────────────── */
+.fh-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--card-border-radius);
+  padding: 14px;
+  box-shadow: var(--card-shadow);
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fh-card-header {
+  margin-bottom: 8px;
+}
+
+.fh-card-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.fh-trend-legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 10.5px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.fh-alerts-csv-tag {
+  font-size: 9.5px;
+  color: var(--text-muted);
+  margin: -4px 0 8px;
+}
+
+.fh-csv-alerts {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-secondary);
+}
+
+.fh-csv-alerts-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 6px;
+}
+
+.fh-csv-alerts-hint {
+  font-size: 9.5px;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+  line-height: 1.4;
+}
+
+.fh-csv-alerts-scroll {
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 4px;
+}
+
+.fh-csv-alert-row {
+  font-size: 10.5px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-secondary);
+  color: var(--text-secondary);
+}
+
+.fh-csv-alert-row--current {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.25);
+}
+
+.fh-csv-alert-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.fh-csv-alert-dt {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.fh-csv-alert-tail {
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--hover-bg);
+  color: var(--accent-blue-lighter);
+}
+
+.fh-csv-pill {
+  font-size: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--status-critical);
+}
+
+.fh-csv-alert-detail {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  line-height: 1.35;
+}
+
+/* Next phase: pill beside title; real content stays visible, dimmed */
+.fh-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.fh-section-head-title {
+  margin-bottom: 0 !important;
+}
+
+.fh-kick-mt {
+  margin-top: 12px;
+  margin-bottom: 8px;
+}
+
+.fh-fleet-head {
+  margin-bottom: 10px;
+}
+
+.fh-critical-head {
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
+
+.fh-next-pill {
+  font-size: 8.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--hover-bg);
+  border: 1px solid var(--text-subtle);
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.fh-next-phase-dim-content {
+  opacity: 0.52;
+  filter: grayscale(0.08);
+}
+
+.fh-critical-empty {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.fh-pred-csv-note {
+  font-size: 9.5px;
+  color: var(--text-muted);
+  line-height: 1.35;
+  margin: 0 0 10px;
+}
+
+.fh-next-phase-actions {
+  margin-top: 4px;
+}
+
+.fh-next-phase-actions-dim {
+  opacity: 0.4;
+  pointer-events: none;
+  filter: grayscale(0.15);
+}
+
+.fh-next-phase-actions-note {
+  margin: 8px 0 0;
+  font-size: 10px;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.35;
+}
+
+.fh-maintenance-actions {
+  margin-top: 4px;
+}
+
+.fh-maintenance-actions .fh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.fh-leg-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 3px;
+}
+
+.fh-chart-range {
+  margin-top: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  line-height: 1.35;
+  max-width: 100%;
+}
+
+.fh-chart-wrap {
+  margin-left: -8px;
+  width: 100%;
+}
+
+.fh-chart-wrap--scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  width: 100%;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+.fh-chart-sizer {
+  flex-shrink: 0;
+  min-width: 100%;
+}
+
+/* ── Row 2 (Alerts + Prediction) ───────────────────────── */
+/* This div occupies the 1fr row of fh-col-left's inner grid */
+.fh-row-two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: minmax(0, auto);
+  gap: 12px;
+  min-height: 0;
+  align-items: start;
+}
+
+.fh-alerts-card,
+.fh-pred-card {
+  min-height: 0;
+  max-height: none;
+  overflow-y: visible;
+}
+
+.fh-alerts-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.fh-alerts-meta {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.fh-alerts-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fh-meta-label {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.fh-meta-val {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+.fh-alerts-check { color: #22c55e; }
+.fh-trend-up { color: #ef4444; }
+
+.fh-sparkline-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.fh-sparkline-wrap {
+  margin-bottom: 4px;
+}
+
+.fh-ki-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fh-ki-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.fh-ki-icon { font-size: 12px; }
+.fh-ki-label { flex: 1; }
+.fh-ki-pct { font-size: 10.5px; color: #ef4444; font-weight: 500; }
+.fh-ki-arrow { font-size: 9px; }
+
+.fh-pred-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fh-pred-row {
+  display: flex;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.fh-pred-label { color: var(--text-muted); }
+.fh-pred-val { color: var(--text-secondary); font-weight: 500; }
+
+/* prediction card */
+.fh-pred-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.fh-pred-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.fh-pred-badge {
+  background: var(--border-secondary);
+  color: var(--accent-blue-light);
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+.fh-vessel-info {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.fh-vessel-tag, .fh-comp-tag {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.fh-vessel-tag { background: var(--border-secondary); color: var(--accent-blue-lighter); }
+.fh-comp-tag { background: var(--hover-bg); color: var(--text-tertiary); }
+
+.fh-pred-days-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.fh-pred-days {
+  font-size: 22px;
+  font-weight: 700;
+  color: #f8b4b4;
+}
+
+.fh-risk-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.fh-risk--critical { background: rgba(239, 68, 68, 0.15); color: var(--status-critical); }
+.fh-risk--warning { background: rgba(245, 158, 11, 0.15); color: var(--status-warning); }
+.fh-risk--healthy { background: rgba(34, 197, 94, 0.15); color: var(--status-healthy); }
+
+.fh-pred-confidence {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.fh-pred-confidence strong { color: var(--text-secondary); }
+
+.fh-bar-wrap {
+  margin-bottom: 4px;
+}
+
+.fh-bar {
+  height: 5px;
+  background: var(--border-secondary);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.fh-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-blue), var(--status-critical));
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.fh-rec-block,
+.fh-sug-block {
+  display: flex;
+  gap: 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-secondary);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.fh-rec-icon,
+.fh-sug-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.fh-rec-label,
+.fh-sug-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 3px;
+}
+
+.fh-rec-text,
+.fh-sug-text {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  line-height: 1.4;
+}
+
+.fh-ignore-row {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+}
+
+.fh-btn-link {
+  background: none;
+  border: none;
+  font-size: 11px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+
+.fh-btn-link:hover { color: var(--text-tertiary); }
+
+.fh-divider { color: var(--text-subtle); font-size: 11px; }
+
+/* ── Buttons ────────────────────────────────────────────── */
+.fh-btn {
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 7px 14px;
+  transition: filter 0.15s;
+  width: 100%;
+}
+
+.fh-btn--primary {
+  background: linear-gradient(135deg, var(--accent-blue), #1d4ed8);
+  color: white;
+}
+
+.fh-btn--primary:hover { filter: brightness(1.1); }
+
+.fh-btn--ghost {
+  background: var(--border-secondary);
+  color: var(--accent-blue-lighter);
+  font-size: 11px;
+  padding: 5px 10px;
+  width: auto;
+}
+
+.fh-btn--ghost:hover { background: var(--accent-blue); color: white; }
+
+/* ── Fleet Overview (right column) ─────────────────────── */
+/* flex:1 + min-height:0 makes this fill the fh-col-right flex column exactly */
+.fh-overview-card {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.fh-fleet-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fh-fleet-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-secondary);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.fh-fleet-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-blue-lighter);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.fh-vessel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fh-vessel-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  padding: 2px 0;
+}
+
+.fh-vessel-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.fh-dot--critical { background: var(--status-critical); }
+.fh-dot--warning { background: var(--status-warning); }
+.fh-dot--healthy { background: var(--status-healthy); }
+.fh-dot--informational { background: var(--status-info); }
+
+.fh-vessel-label {
+  flex: 1;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fh-vessel-score {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* critical vessels section */
+.fh-critical-row {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid var(--status-critical);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+}
+
+.fh-critical-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.fh-dot-critical {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--status-critical);
+  flex-shrink: 0;
+}
+
+.fh-critical-name {
+  flex: 1;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fca5a5;
+}
+
+.fh-critical-score {
+  font-size: 10px;
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.fh-critical-comp {
+  margin-top: 4px;
+}
+
+.fh-cc-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+  margin-bottom: 4px;
+}
+
+.fh-days-warn {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.fh-health-bar-wrap {
+  height: 4px;
+  background: var(--border-secondary);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.fh-health-bar {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.fh-cc-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+
+/* ── Utilities ──────────────────────────────────────────── */
+.mb-8  { margin-bottom: 8px; }
+.mb-10 { margin-bottom: 10px; }
+.mt-8  { margin-top: 8px; }
+.mt-10 { margin-top: 10px; }
+.mt-12 { margin-top: 12px; }
+.mt-16 { margin-top: 16px; }

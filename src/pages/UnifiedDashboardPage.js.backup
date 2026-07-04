@@ -1,0 +1,460 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useSelection } from '../context/SelectionContext';
+import GrafanaEmbed from '../components/GrafanaEmbed';
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import './UnifiedDashboardPage.css';
+
+export default function UnifiedDashboardPage() {
+  const { selection } = useSelection();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('overview');
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch EDP data from backend
+  useEffect(() => {
+    fetch('http://localhost:5002/api/edp/dashboard')
+      .then(res => res.json())
+      .then(data => {
+        setDashboardData(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Failed to load dashboard data:', err);
+        setLoading(false);
+      });
+  }, []);
+
+  const tabs = [
+    { id: 'overview', label: 'Fleet Overview', icon: '' },
+    { id: 'realtime', label: 'Real-Time Monitoring', icon: '' },
+    { id: 'analytics', label: 'Analytics & Insights', icon: '' },
+    { id: 'predictive', label: 'Predictive Alerts', icon: '' },
+    { id: 'vessel', label: 'Vessel Deep Dive', icon: '' },
+  ];
+
+  return (
+    <div className="unified-dashboard">
+      {/* Header */}
+      <div className="unified-header">
+        <div className="unified-header-content">
+          <h1 className="unified-title">Maritime Predictive Maintenance Platform</h1>
+          <p className="unified-subtitle">Unified Fleet & Sensor Intelligence Dashboard</p>
+        </div>
+        <div className="unified-header-actions">
+      
+      {/* Tab Navigation */}
+      <div className="unified-tabs">
+        {tabs.map(tab => (
+          <button
+            key={tab.id}
+            className={`unified-tab ${activeTab === tab.id ? 'unified-tab--active' : ''}`}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            <span className="unified-tab-icon">{tab.icon}</span>
+            <span className="unified-tab-label">{tab.label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Content Area */}
+      <div className="unified-content">
+        {activeTab === 'overview' && <OverviewTab data={dashboardData} loading={loading} navigate={navigate} />}
+        {activeTab === 'realtime' && <RealtimeTab data={dashboardData} />}
+        {activeTab === 'analytics' && <AnalyticsTab />}
+        {activeTab === 'predictive' && <PredictiveTab />}
+        {activeTab === 'vessel' && <VesselDeepDiveTab data={dashboardData} selection={selection} />}
+      </div>
+    </div>
+  );
+}
+
+// TAB 1: FLEET OVERVIEW
+function OverviewTab({ data, loading, navigate }) {
+  if (loading) return (<div className="loading-state">Loading...</div>);
+  if (!data) return (<div className="error-state">No data available</div>);
+
+  const stats = [
+    { 
+      label: 'Total Vessels', 
+      value: Object.keys(data.byVessel || {}).length, 
+      unit: '', 
+      icon: 'V',
+      color: '#3b82f6',
+      trend: 'Across fleet'
+    },
+    { 
+      label: 'Active Alerts', 
+      value: data.kpi?.activeAlerts || 0, 
+      unit: '', 
+      icon: '!',
+      color: '#f59e0b',
+      trend: `${data.kpi?.criticalAlerts || 0} critical`
+    },
+    { 
+      label: 'Avg Fleet Health', 
+      value: data.kpi?.overallHealth || 0, 
+      unit: '%', 
+      icon: 'H',
+      color: '#22c55e',
+      trend: 'Overall status'
+    },
+    { 
+      label: 'Total Events', 
+      value: data.fleetTimeline?.length || 0, 
+      unit: '', 
+      icon: 'E',
+      color: '#8b5cf6',
+      trend: 'Health readings'
+    },
+  ];
+
+  // Prepare fleet timeline data for chart
+  const timelineData = (data.fleetTimeline || []).slice(-30).map(point => ({
+    time: point?._t ? new Date(point._t).toLocaleDateString() : 'Unknown',
+    health: point?.value || 0,
+    vessel: point?.label?.split(' · ')?.[1] || 'Unknown'
+  }));
+
+  // Vessel health distribution
+  const vesselHealthData = Object.entries(data.byVessel || {}).map(([name, vessel]) => {
+    const latestHealth = vessel?.healthTrend?.[vessel.healthTrend.length - 1]?.value || 0;
+    return {
+      name: name,
+      health: latestHealth,
+      alerts: vessel?.alerts?.totalAlerts || 0
+    };
+  }).sort((a, b) => a.health - b.health);
+
+  return (
+    <div className="tab-content">
+      {/* KPI Cards */}
+      <div className="kpi-grid">
+        {stats.map((stat, idx) => (
+          <div key={idx} className="kpi-card" style={{ borderTopColor: stat.color }}>
+            <div className="kpi-icon" style={{ color: stat.color }}>{stat.icon}</div>
+            <div className="kpi-body">
+              <div className="kpi-label">{stat.label}</div>
+              <div className="kpi-value">
+                {stat.value}<span className="kpi-unit">{stat.unit}</span>
+              </div>
+              <div className="kpi-trend">{stat.trend}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Charts Section */}
+      <div className="charts-grid">
+        {/* Fleet Timeline */}
+        <div className="chart-card chart-card--full">
+          <h3 className="chart-title">Fleet Health Timeline (Last 30 Events)</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <AreaChart data={timelineData}>
+              <defs>
+                <linearGradient id="healthGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+              <XAxis dataKey="time" stroke="#94a3b8" fontSize={12} />
+              <YAxis stroke="#94a3b8" fontSize={12} />
+              <Tooltip 
+                contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
+                labelStyle={{ color: '#e2e8f0' }}
+              />
+              <Area 
+                type="monotone" 
+                dataKey="health" 
+                stroke="#22c55e" 
+                fill="url(#healthGradient)" 
+                strokeWidth={2}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Vessel Health Distribution */}
+        <div className="chart-card chart-card--half">
+          <h3 className="chart-title">Vessel Health Distribution</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={vesselHealthData} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+              <XAxis type="number" stroke="#94a3b8" fontSize={12} domain={[0, 100]} />
+              <YAxis type="category" dataKey="name" stroke="#94a3b8" fontSize={11} width={80} />
+              <Tooltip 
+                contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
+                labelStyle={{ color: '#e2e8f0' }}
+              />
+              <Bar dataKey="health" fill="#3b82f6" radius={[0, 8, 8, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Critical Vessels */}
+        <div className="chart-card chart-card--half">
+          <h3 className="chart-title">Vessels Requiring Attention</h3>
+          <div className="vessel-list">
+            {vesselHealthData.filter(v => v.health < 70 || v.alerts > 0).length > 0 ? (
+              vesselHealthData.filter(v => v.health < 70 || v.alerts > 0).map((vessel, idx) => (
+                <div key={idx} className="vessel-list-item">
+                  <div className="vessel-list-info">
+                    <span className="vessel-list-name">{vessel.name}</span>
+                    <span className={`vessel-list-status ${vessel.health < 50 ? 'critical' : 'warning'}`}>
+                      {vessel.health < 50 ? 'Critical' : 'Warning'}
+                    </span>
+                  </div>
+                  <div className="vessel-list-metrics">
+                    <span className="vessel-metric">Health: {vessel.health}%</span>
+                    <span className="vessel-metric">Alerts: {vessel.alerts}</span>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="no-critical-vessels">
+                <p>All vessels operating normally</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="quick-actions">
+        <h3 className="section-title">Quick Actions</h3>
+        <div className="action-buttons">
+          <button className="action-btn action-btn--primary" onClick={() => navigate('/maintenance-actions')}>
+            Schedule Maintenance
+          </button>
+          <button className="action-btn action-btn--secondary" onClick={() => navigate('/fleet-health')}>
+            Detailed Health Report
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ==============================================================
+   TAB 2: REAL-TIME MONITORING
+   ============================================================== */
+function RealtimeTab({ data }) {
+  return (
+    <div className="tab-content">
+      <div className="section-header">
+        <h2 className="section-title">Live Sensor Data & System Health</h2>
+        <p className="section-description">Real-time monitoring from EdgeX → Kafka → QuestDB pipeline</p>
+      </div>
+
+      {/* Grafana Embedded Dashboards */}
+      <GrafanaEmbed 
+        dashboard="sensor-events" 
+        title="Real-Time Sensor Events (Temperature, Pressure, Vibration)"
+        height="500px"
+        params={{ refresh: '10s', from: 'now-1h' }}
+      />
+
+      <div className="charts-grid">
+        <div className="chart-card chart-card--half">
+          <GrafanaEmbed 
+            dashboard="ship-summary" 
+            title="Ship System Summary"
+            height="400px"
+          />
+        </div>
+        <div className="chart-card chart-card--half">
+          <GrafanaEmbed 
+            dashboard="ship-thermal-health" 
+            title="Thermal Health Monitoring"
+            height="400px"
+          />
+        </div>
+      </div>
+
+      <GrafanaEmbed 
+        dashboard="kafka-analytics" 
+        title="Data Pipeline Health (Kafka Metrics)"
+        height="400px"
+        params={{ refresh: '30s' }}
+      />
+    </div>
+  );
+}
+
+/* ==============================================================
+   TAB 3: ANALYTICS & INSIGHTS
+   ============================================================== */
+function AnalyticsTab() {
+  return (
+    <div className="tab-content">
+      <div className="section-header">
+        <h2 className="section-title">Advanced Analytics & KPI Monitoring</h2>
+        <p className="section-description">Historical trends, health scores, and operational KPIs</p>
+      </div>
+
+      <GrafanaEmbed 
+        dashboard="health-scores" 
+        title="Equipment Health Scores & Status"
+        height="500px"
+        params={{ from: 'now-24h' }}
+      />
+
+      <div className="charts-grid">
+        <div className="chart-card chart-card--full">
+          <GrafanaEmbed 
+            dashboard="historical-trends" 
+            title="Historical Sensor Trends"
+            height="450px"
+            params={{ from: 'now-7d' }}
+          />
+        </div>
+      </div>
+
+      <GrafanaEmbed 
+        dashboard="kpi-monitoring" 
+        title="Operational KPIs (Uptime, MTBF, Availability)"
+        height="450px"
+        params={{ from: 'now-30d' }}
+      />
+    </div>
+  );
+}
+
+/* ==============================================================
+   TAB 4: PREDICTIVE ALERTS
+   ============================================================== */
+function PredictiveTab() {
+  return (
+    <div className="tab-content">
+      <div className="section-header">
+        <h2 className="section-title">Predictive Maintenance & Alerts</h2>
+        <p className="section-description">AI-powered predictions and maintenance recommendations</p>
+      </div>
+
+      <GrafanaEmbed 
+        dashboard="predictive-alerts" 
+        title="Active Predictive Alerts & Severity Distribution"
+        height="500px"
+        params={{ refresh: '30s' }}
+      />
+
+      <GrafanaEmbed 
+        dashboard="maintenance-recommendations" 
+        title="AI-Generated Maintenance Recommendations"
+        height="450px"
+      />
+
+      <div className="charts-grid">
+        <div className="chart-card chart-card--half">
+          <GrafanaEmbed 
+            dashboard="ship-alerts-events" 
+            title="Ship Alert History"
+            height="400px"
+            params={{ from: 'now-7d' }}
+          />
+        </div>
+        <div className="chart-card chart-card--half">
+          <GrafanaEmbed 
+            dashboard="ship-generator-performance" 
+            title="Generator Performance Monitoring"
+            height="400px"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ==============================================================
+   TAB 5: VESSEL DEEP DIVE
+   ============================================================== */
+function VesselDeepDiveTab({ data, selection }) {
+  const vesselName = selection?.vesselId || 'Tail 1';
+  const vesselData = data?.byVessel?.[vesselName];
+
+  return (
+    <div className="tab-content">
+      <div className="section-header">
+        <h2 className="section-title">Vessel Deep Dive: {vesselName}</h2>
+        <p className="section-description">Comprehensive vessel analysis with real-time and historical data</p>
+      </div>
+
+      {/* Vessel Stats */}
+      {vesselData ? (
+        <div className="vessel-stats-grid">
+          <div className="stat-box stat-box--health">
+            <div className="stat-label">Latest Health Score</div>
+            <div className="stat-value">
+              {vesselData.healthTrend?.[vesselData.healthTrend.length - 1]?.value || 0}%
+            </div>
+          </div>
+          <div className="stat-box stat-box--alerts">
+            <div className="stat-label">Total Alerts</div>
+            <div className="stat-value">{vesselData.alerts?.totalAlerts || 0}</div>
+          </div>
+          <div className="stat-box stat-box--risk">
+            <div className="stat-label">Risk Level</div>
+            <div className="stat-value">{vesselData.prediction?.risk || 'Unknown'}</div>
+          </div>
+          <div className="stat-box stat-box--prediction">
+            <div className="stat-label">Predicted Maintenance</div>
+            <div className="stat-value">{vesselData.prediction?.estimatedDays || 0} days</div>
+          </div>
+        </div>
+      ) : (
+        <div className="no-vessel-data">
+          <p>No data available for {vesselName}. Select a different vessel or check if backend is running.</p>
+        </div>
+      )}
+
+      {/* Grafana Ship-Specific Dashboards */}
+      <GrafanaEmbed 
+        dashboard="ship-overview" 
+        title="Ship System Overview"
+        height="500px"
+        params={{ 'var-vessel': vesselName }}
+      />
+
+      <div className="charts-grid">
+        <div className="chart-card chart-card--half">
+          <GrafanaEmbed 
+            dashboard="ship-shaft-telemetry" 
+            title="Shaft Telemetry"
+            height="400px"
+            params={{ 'var-vessel': vesselName }}
+          />
+        </div>
+        <div className="chart-card chart-card--half">
+          <GrafanaEmbed 
+            dashboard="ship-energy-efficiency" 
+            title="Energy Efficiency"
+            height="400px"
+            params={{ 'var-vessel': vesselName }}
+          />
+        </div>
+      </div>
+
+      <GrafanaEmbed 
+        dashboard="ship-historical-trends" 
+        title="Historical Performance Trends"
+        height="450px"
+        params={{ 'var-vessel': vesselName, from: 'now-30d' }}
+      />
+
+      {/* Recommendations */}
+      {vesselData?.prediction && (
+        <div className="recommendation-box">
+          <h3 className="recommendation-title">Maintenance Recommendation</h3>
+          <p className="recommendation-text">{vesselData.prediction.recommendation}</p>
+          <p className="recommendation-action"><strong>Suggested Action:</strong> {vesselData.prediction.suggestedAction}</p>
+          <div className="recommendation-meta">
+            <span>Confidence: {vesselData.prediction.confidence}%</span>
+            <span>Accuracy: {vesselData.prediction.accuracyEstimate}%</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

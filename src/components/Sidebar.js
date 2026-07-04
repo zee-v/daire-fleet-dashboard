@@ -1,0 +1,235 @@
+import React, { useState, useEffect } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
+import { getFleets } from '../services/fleetService';
+import { getComponents } from '../services/componentService';
+import { useSelection } from '../context/SelectionContext';
+import './Sidebar.css';
+
+const STATUS_COLOR = {
+  critical: '#ef4444',
+  warning: '#f59e0b',
+  healthy: '#22c55e',
+  informational: '#60a5fa',
+};
+
+const ROUTE_SECTIONS = [
+  {
+    id: 'fleet-overview',
+    label: 'Fleet Overview',
+    icon: '▦',
+    defaultExpanded: true,
+    children: [
+      { label: 'Dashboard', route: '/fleet-overview', icon: '📊', end: true },
+      { label: 'Detailed Health Report', route: '/fleet-overview/health-report', icon: '❤️' },
+      { label: 'Alerts Summary', route: '/fleet-overview/alerts-summary', icon: '⚠️' },
+      { label: 'Trends / Analytics', route: '/fleet-overview/trends-analytics', icon: '📈' },
+    ],
+  },
+  {
+    id: 'live-monitoring',
+    label: 'Live Monitoring',
+    icon: '📡',
+    children: [
+      { label: 'Health Score', route: '/live-monitoring/health-score', icon: '❤️' },
+      { label: 'KPI Monitoring', route: '/live-monitoring/kpi-monitoring', icon: '📈' },
+    ],
+  },
+  {
+    id: 'daire-analytics',
+    label: 'dAIRE Analytics',
+    icon: '📊',
+    children: [
+      { label: 'Historical Trends', route: '/daire-analytics/historical-trends', icon: '📉' },
+      { label: 'Kafka Analytics', route: '/daire-analytics/kafka-analytics', icon: '⛓' },
+      { label: 'KPI Monitoring', route: '/daire-analytics/kpi-monitoring', icon: '📈' },
+      { label: 'Maintenance Recommendations', route: '/daire-analytics/maintenance-recommendations', icon: '🗓️' },
+      { label: 'Predictive Alerts', route: '/daire-analytics/predictive-alerts', icon: '⚠️' },
+      { label: 'Equipment Health Scores', route: '/daire-analytics/equipment-health-scores', icon: '❤️' },
+      { label: 'Historical Replay', route: '/daire-analytics/historical-replay', icon: '↺' },
+      { label: 'Sensor Events', route: '/daire-analytics/sensor-events', icon: '🔍' },
+    ],
+  },
+  {
+    id: 'predictive-ship-1',
+    label: 'dAIRE Predictive Maintenance - Ship 1',
+    icon: '🔮',
+    children: [
+      { label: 'Predictive Alerts', route: '/predictive-maintenance/ship-1/predictive-alerts', icon: '⚠️' },
+      { label: 'Maintenance Recommendations', route: '/predictive-maintenance/ship-1/maintenance-recommendations', icon: '🗓️' },
+    ],
+  },
+  {
+    id: 'predictive-ship-2',
+    label: 'dAIRE Predictive Maintenance - Ship 2',
+    icon: '🔮',
+    children: [
+      { label: 'Predictive Alerts', route: '/predictive-maintenance/ship-2/predictive-alerts', icon: '⚠️' },
+      { label: 'Maintenance Recommendations', route: '/predictive-maintenance/ship-2/maintenance-recommendations', icon: '🗓️' },
+    ],
+  },
+];
+
+function isChildRouteActive(pathname, child) {
+  return child.end ? pathname === child.route : pathname.startsWith(child.route);
+}
+
+function RouteChildLink({ item }) {
+  return (
+    <NavLink
+      to={item.route}
+      end={item.end}
+      className={({ isActive }) => `nav-comp-row sidebar-child-link${isActive ? ' nav-comp-row--active' : ''}`}
+      title={item.label}
+    >
+      <span className="nav-icon">{item.icon}</span>
+      <span className="nav-comp-label">{item.label}</span>
+    </NavLink>
+  );
+}
+
+function RouteSection({ section }) {
+  const { pathname } = useLocation();
+  const sectionIsActive = section.children.some((child) => isChildRouteActive(pathname, child));
+  const [expanded, setExpanded] = useState(section.defaultExpanded || sectionIsActive);
+
+  useEffect(() => {
+    if (sectionIsActive) {
+      setExpanded(true);
+    }
+  }, [sectionIsActive]);
+
+  return (
+    <div className="nav-item-wrapper">
+      <button
+        type="button"
+        className={`nav-item sidebar-group-toggle${sectionIsActive ? ' nav-item--active' : ''}`}
+        onClick={() => setExpanded((p) => !p)}
+        aria-expanded={expanded}
+      >
+        <span className="nav-icon">{section.icon}</span>
+        <span className="nav-label">{section.label}</span>
+        <span className={`nav-arrow ${expanded ? 'nav-arrow--open' : ''}`}>›</span>
+      </button>
+      {expanded && (
+        <div className="nav-children sidebar-group-children">
+          {section.children.map((child) => (
+            <RouteChildLink key={child.route} item={child} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ComponentItem({ component, fleetId }) {
+  const { setSelection } = useSelection();
+  const route = `/vessel-components/${fleetId}/${component.id}`;
+  const selectComponent = () => setSelection({ fleetId, componentId: component.id });
+
+  return (
+    <NavLink
+      to={route}
+      className={({ isActive }) => `nav-comp-row${isActive ? ' nav-comp-row--active' : ''}`}
+      onClick={selectComponent}
+      title={component.name}
+    >
+      <span className="nav-status-dot" style={{ background: STATUS_COLOR[component.status] || '#64748b' }} />
+      <span className="nav-comp-label">{component.name}</span>
+    </NavLink>
+  );
+}
+
+function FleetItem({ fleet }) {
+  const { pathname } = useLocation();
+  const components = getComponents(fleet.id);
+  const routePrefix = `/vessel-components/${fleet.id}/`;
+  const fleetIsActive = pathname.startsWith(routePrefix);
+  const [expanded, setExpanded] = useState(fleetIsActive);
+  
+  useEffect(() => {
+    if (fleetIsActive) {
+      setExpanded(true);
+    }
+  }, [fleetIsActive]);
+
+  return (
+    <div className="nav-item-wrapper">
+      <button
+        type="button"
+        className={`nav-item sidebar-group-toggle${fleetIsActive ? ' nav-item--active' : ''}`}
+        onClick={() => setExpanded((p) => !p)}
+        aria-expanded={expanded}
+      >
+        <span className="nav-icon">▤</span>
+        <span className="nav-label">{fleet.name}</span>
+        <span className={`nav-arrow ${expanded ? 'nav-arrow--open' : ''}`}>›</span>
+      </button>
+      {expanded && (
+        <div className="nav-children">
+          {components.map((c) => (
+            <ComponentItem key={c.id} component={c} fleetId={fleet.id} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function Sidebar() {
+  const fleets = getFleets();
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('theme') || 'dark';
+  });
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+  };
+
+  // Apply theme on mount
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  return (
+    <aside className="sidebar">
+      {/* Logo */}
+      <div className="sidebar-logo">
+        <div className="logo-mark">
+          <span className="logo-icon">◈</span>
+          <span className="logo-text">dAIRE</span>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <nav className="sidebar-nav">
+        {ROUTE_SECTIONS.map((section) => (
+          <RouteSection key={section.id} section={section} />
+        ))}
+
+        <div className="sidebar-section-title">Vessel Components</div>
+
+        {fleets.map((fleet) => (
+          <FleetItem key={fleet.id} fleet={fleet} />
+        ))}
+      </nav>
+
+      {/* Theme Toggle Button */}
+      <div className="sidebar-theme-toggle">
+        <button className="theme-toggle-btn" onClick={toggleTheme} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
+          <span className="theme-icon">{theme === 'dark' ? '☀️' : '🌙'}</span>
+          <span className="theme-label">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+        </button>
+      </div>
+
+      {/* Legend */}
+      <div className="sidebar-legend">
+        <div className="legend-row"><span className="legend-dot" style={{ background: '#ef4444' }} />Critical</div>
+        <div className="legend-row"><span className="legend-dot" style={{ background: '#f59e0b' }} />Warning</div>
+        <div className="legend-row"><span className="legend-dot" style={{ background: '#22c55e' }} />Healthy</div>
+      </div>
+    </aside>
+  );
+}
