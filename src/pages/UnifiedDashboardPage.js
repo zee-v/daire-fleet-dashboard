@@ -19,7 +19,7 @@ function UnifiedDashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:5002/api/edp/dashboard')
+    fetch(`${(process.env.REACT_APP_EDP_API_URL || '').replace(/\/$/, '')}/api/edp/dashboard`)
       .then(res => res.json())
       .then(data => {
         setDashboardData(data);

@@ -148,6 +148,11 @@ function parseDate(dateStr) {
  *   dateRange: {from: string, to: string}
  * }>}
  */
+function getApiBase() {
+  const fromEnv = process.env.REACT_APP_EDP_API_URL;
+  return (fromEnv || '').replace(/\/$/, '');
+}
+
 export async function loadComponentData(componentId) {
   const component = getComponentById(componentId);
   if (!component) {
@@ -156,7 +161,7 @@ export async function loadComponentData(componentId) {
 
   try {
     // Fetch CSV data from backend
-    const response = await fetch(`/api/component/${componentId}/data`);
+    const response = await fetch(`${getApiBase()}/api/component/${componentId}/data`);
     if (!response.ok) {
       throw new Error(`Failed to load component data: ${response.status}`);
     }
