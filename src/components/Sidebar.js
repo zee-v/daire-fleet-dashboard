@@ -49,24 +49,6 @@ const ROUTE_SECTIONS = [
       { label: 'Sensor Events', route: '/daire-analytics/sensor-events', icon: '🔍' },
     ],
   },
-  {
-    id: 'predictive-ship-1',
-    label: 'dAIRE Predictive Maintenance - Ship 1',
-    icon: '🔮',
-    children: [
-      { label: 'Predictive Alerts', route: '/predictive-maintenance/ship-1/predictive-alerts', icon: '⚠️' },
-      { label: 'Maintenance Recommendations', route: '/predictive-maintenance/ship-1/maintenance-recommendations', icon: '🗓️' },
-    ],
-  },
-  {
-    id: 'predictive-ship-2',
-    label: 'dAIRE Predictive Maintenance - Ship 2',
-    icon: '🔮',
-    children: [
-      { label: 'Predictive Alerts', route: '/predictive-maintenance/ship-2/predictive-alerts', icon: '⚠️' },
-      { label: 'Maintenance Recommendations', route: '/predictive-maintenance/ship-2/maintenance-recommendations', icon: '🗓️' },
-    ],
-  },
 ];
 
 function isChildRouteActive(pathname, child) {
@@ -93,9 +75,7 @@ function RouteSection({ section }) {
   const [expanded, setExpanded] = useState(section.defaultExpanded || sectionIsActive);
 
   useEffect(() => {
-    if (sectionIsActive) {
-      setExpanded(true);
-    }
+    if (sectionIsActive) setExpanded(true);
   }, [sectionIsActive]);
 
   return (
@@ -145,11 +125,9 @@ function FleetItem({ fleet }) {
   const routePrefix = `/vessel-components/${fleet.id}/`;
   const fleetIsActive = pathname.startsWith(routePrefix);
   const [expanded, setExpanded] = useState(fleetIsActive);
-  
+
   useEffect(() => {
-    if (fleetIsActive) {
-      setExpanded(true);
-    }
+    if (fleetIsActive) setExpanded(true);
   }, [fleetIsActive]);
 
   return (
@@ -175,11 +153,41 @@ function FleetItem({ fleet }) {
   );
 }
 
+function PredictiveMaintenanceSection({ fleets }) {
+  const { pathname } = useLocation();
+  const isActive = pathname.startsWith('/vessel-components/');
+  const [expanded, setExpanded] = useState(isActive);
+
+  useEffect(() => {
+    if (isActive) setExpanded(true);
+  }, [isActive]);
+
+  return (
+    <div className="nav-item-wrapper">
+      <button
+        type="button"
+        className={`nav-item sidebar-group-toggle${isActive ? ' nav-item--active' : ''}`}
+        onClick={() => setExpanded((p) => !p)}
+        aria-expanded={expanded}
+      >
+        <span className="nav-icon">🔮</span>
+        <span className="nav-label">Predictive Maintenance</span>
+        <span className={`nav-arrow ${expanded ? 'nav-arrow--open' : ''}`}>›</span>
+      </button>
+      {expanded && (
+        <div className="nav-children sidebar-group-children">
+          {fleets.map((fleet) => (
+            <FleetItem key={fleet.id} fleet={fleet} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Sidebar() {
   const fleets = getFleets();
-  const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('theme') || 'dark';
-  });
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
 
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
@@ -188,14 +196,12 @@ export default function Sidebar() {
     document.documentElement.setAttribute('data-theme', newTheme);
   };
 
-  // Apply theme on mount
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
   return (
     <aside className="sidebar">
-      {/* Logo */}
       <div className="sidebar-logo">
         <div className="logo-mark">
           <span className="logo-icon">◈</span>
@@ -203,20 +209,14 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* Navigation */}
       <nav className="sidebar-nav">
         {ROUTE_SECTIONS.map((section) => (
           <RouteSection key={section.id} section={section} />
         ))}
 
-        <div className="sidebar-section-title">Vessel Components</div>
-
-        {fleets.map((fleet) => (
-          <FleetItem key={fleet.id} fleet={fleet} />
-        ))}
+        <PredictiveMaintenanceSection fleets={fleets} />
       </nav>
 
-      {/* Theme Toggle Button */}
       <div className="sidebar-theme-toggle">
         <button className="theme-toggle-btn" onClick={toggleTheme} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
           <span className="theme-icon">{theme === 'dark' ? '☀️' : '🌙'}</span>
@@ -224,7 +224,6 @@ export default function Sidebar() {
         </button>
       </div>
 
-      {/* Legend */}
       <div className="sidebar-legend">
         <div className="legend-row"><span className="legend-dot" style={{ background: '#ef4444' }} />Critical</div>
         <div className="legend-row"><span className="legend-dot" style={{ background: '#f59e0b' }} />Warning</div>

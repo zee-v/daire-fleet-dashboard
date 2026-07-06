@@ -22,6 +22,7 @@ import ActiveAlertsPage from './pages/predictive/ActiveAlertsPage';
 import MaintenanceSchedulePage from './pages/predictive/MaintenanceSchedulePage';
 import GrafanaPredictivePage from './pages/predictive/GrafanaPredictivePage';
 
+
 import { SelectionProvider } from './context/SelectionContext';
 import './App.css';
 
@@ -71,52 +72,6 @@ function App() {
             />
             <Route path="/daire-analytics/sensor-events" element={<SensorEventsPage />} />
 
-            {/* dAIRE Predictive Maintenance Ship Tabs */}
-            <Route
-              path="/predictive-maintenance/ship-1/predictive-alerts"
-              element={(
-                <DashboardTabPage
-                  title="Ship 1 Predictive Alerts"
-                  description="Ship 1 active predictive alerts and anomaly indicators"
-                  dashboard="daire-pred-alerts-001"
-                  params={{ from: 'now-24h', to: 'now', refresh: '30s', 'var-ship': 'Ship 1' }}
-                />
-              )}
-            />
-            <Route
-              path="/predictive-maintenance/ship-1/maintenance-recommendations"
-              element={(
-                <DashboardTabPage
-                  title="Ship 1 Maintenance Recommendations"
-                  description="Ship 1 recommended maintenance windows and actions"
-                  dashboard="daire-maint-001"
-                  params={{ from: 'now-7d', to: 'now+7d', refresh: '1m', 'var-ship': 'Ship 1' }}
-                />
-              )}
-            />
-            <Route
-              path="/predictive-maintenance/ship-2/predictive-alerts"
-              element={(
-                <DashboardTabPage
-                  title="Ship 2 Predictive Alerts"
-                  description="Ship 2 active predictive alerts and anomaly indicators"
-                  dashboard="daire-pred-alerts-001"
-                  params={{ from: 'now-24h', to: 'now', refresh: '30s', 'var-ship': 'Ship 2' }}
-                />
-              )}
-            />
-            <Route
-              path="/predictive-maintenance/ship-2/maintenance-recommendations"
-              element={(
-                <DashboardTabPage
-                  title="Ship 2 Maintenance Recommendations"
-                  description="Ship 2 recommended maintenance windows and actions"
-                  dashboard="daire-maint-001"
-                  params={{ from: 'now-7d', to: 'now+7d', refresh: '1m', 'var-ship': 'Ship 2' }}
-                />
-              )}
-            />
-            
             {/* Real-Time Monitoring */}
             <Route path="/monitoring/sensor-events" element={<SensorEventsPage />} />
             <Route path="/monitoring/health-scores" element={<HealthScoresPage />} />

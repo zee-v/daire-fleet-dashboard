@@ -35,3 +35,60 @@
   display: block;
   background: #0f172a;
 }
+
+.grafana-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: #0f172a;
+  color: #94a3b8;
+  padding: 40px 24px;
+  text-align: center;
+}
+
+.grafana-placeholder-icon {
+  font-size: 48px;
+  opacity: 0.4;
+}
+
+.grafana-placeholder-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.grafana-placeholder-text {
+  font-size: 14px;
+  max-width: 480px;
+  line-height: 1.6;
+}
+
+.grafana-placeholder-hint {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.grafana-placeholder-hint code {
+  background: #1e293b;
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: #7dd3fc;
+}
+
+.grafana-placeholder-link {
+  margin-top: 8px;
+  padding: 8px 20px;
+  background: #1e40af;
+  color: #fff;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.grafana-placeholder-link:hover {
+  background: #2563eb;
+}
