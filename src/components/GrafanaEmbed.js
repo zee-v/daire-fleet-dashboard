@@ -34,15 +34,33 @@ export default function GrafanaEmbed({
   title,
   height = '600px',
   params = {},
+  kiosk = true,
 }) {
   const [loadFailed, setLoadFailed] = useState(false);
   const grafanaUrl = process.env.REACT_APP_GRAFANA_URL;
   const baseUrl = (grafanaUrl || '').replace(/\/$/, '');
   const token = PUBLIC_TOKENS[dashboard];
 
-  const showPlaceholder = !baseUrl || !token || loadFailed;
+  // Local Grafana (localhost) uses direct /d/<uid> embed URL
+  // Grafana Cloud uses /public-dashboards/<token>
+  const isLocal = baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1');
 
-  const embedUrl = token ? `${baseUrl}/public-dashboards/${token}` : '';
+  let embedUrl = '';
+  if (isLocal) {
+    const queryParams = new URLSearchParams({
+      orgId: '1',
+      from: params.from || 'now-6h',
+      to: params.to || 'now',
+      refresh: params.refresh || '30s',
+      ...(kiosk && { kiosk: 'tv' }),
+      ...params,
+    });
+    embedUrl = `${baseUrl}/d/${dashboard}?${queryParams.toString()}`;
+  } else if (token) {
+    embedUrl = `${baseUrl}/public-dashboards/${token}`;
+  }
+
+  const showPlaceholder = !baseUrl || (!isLocal && !token) || loadFailed;
 
   return (
     <div className="grafana-embed-container">
